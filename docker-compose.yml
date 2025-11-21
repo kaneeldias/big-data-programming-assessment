@@ -1,0 +1,77 @@
+services:
+  namenode:
+    image: apache/hadoop:3.4.1
+    container_name: namenode
+    hostname: namenode
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    volumes:
+      - ./config:/opt/hadoop/etc/hadoop
+      - ./namenode_data:/opt/hadoop/data/namenode
+    environment:
+      - CLUSTER_NAME=big-data-programming-coursework
+      - HADOOP_OPTS="-Dhadoop.security.logger=INFO,RFAS"
+    env_file:
+      - ./hadoop.env
+    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/hdfs namenode"]
+    healthcheck:
+      test: ["CMD-SHELL", "hdfs dfsadmin -report | grep 'Live datanodes'"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    networks:
+      - hadoop-network
+
+  datanode:
+    image: apache/hadoop:3.4.1
+    container_name: datanode
+    hostname: datanode
+    depends_on:
+      - namenode
+    volumes:
+      - ./config:/opt/hadoop/etc/hadoop
+      - ./datanode_data:/opt/hadoop/data/datanode
+    environment:
+      - CLUSTER_NAME=big-data-programming-coursework
+    env_file:
+      - ./hadoop.env
+    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/hdfs datanode"]
+    networks:
+      - hadoop-network
+
+  resourcemanager:
+    image: apache/hadoop:3.4.1
+    container_name: resourcemanager
+    hostname: resourcemanager
+    ports:
+      - "8088:8088"
+    depends_on:
+      - namenode
+      - datanode
+    volumes:
+      - ./config:/opt/hadoop/etc/hadoop
+    env_file:
+      - ./hadoop.env
+    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/yarn resourcemanager"]
+    networks:
+      - hadoop-network
+
+  nodemanager:
+    image: apache/hadoop:3.4.1
+    container_name: nodemanager
+    hostname: nodemanager
+    depends_on:
+      - namenode
+      - resourcemanager
+    volumes:
+      - ./config:/opt/hadoop/etc/hadoop
+    env_file:
+      - ./hadoop.env
+    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/yarn nodemanager"]
+    networks:
+      - hadoop-network
+
+networks:
+  hadoop-network:
+    driver: bridge
