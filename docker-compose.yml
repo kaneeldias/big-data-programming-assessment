@@ -9,12 +9,13 @@ services:
     volumes:
       - ./hadoop_namenode:/opt/hadoop/data/namenode
       - ./hadoop_config:/opt/hadoop/etc/hadoop
-      - ./start-hdfs.sh:/start-hdfs.sh
+      - ./init-scripts/start-hdfs.sh:/start-hdfs.sh
     environment:
       - CLUSTER_NAME=big-data-programming-coursework
       - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
       - HADOOP_HOME=/opt/hadoop
       - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
     command: [ "/bin/bash", "/start-hdfs.sh" ]
@@ -36,12 +37,13 @@ services:
     volumes:
       - ./hadoop_datanode:/opt/hadoop/data/datanode
       - ./hadoop_config:/opt/hadoop/etc/hadoop
-      - ./init-datanode.sh:/init-datanode.sh
+      - ./init-scripts/init-datanode.sh:/init-datanode.sh
     environment:
       - CLUSTER_NAME=big-data-programming-coursework
       - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
       - HADOOP_HOME=/opt/hadoop
       - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
     command: [ "/bin/bash", "/init-datanode.sh" ]
@@ -64,6 +66,7 @@ services:
       - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
       - HADOOP_HOME=/opt/hadoop
       - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
     command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn resourcemanager"]
@@ -84,6 +87,7 @@ services:
       - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
       - HADOOP_HOME=/opt/hadoop
       - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
     command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn nodemanager"]
