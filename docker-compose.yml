@@ -7,14 +7,17 @@ services:
       - "9870:9870"
       - "9000:9000"
     volumes:
-      - ./config:/opt/hadoop/etc/hadoop
-      - ./namenode_data:/opt/hadoop/data/namenode
+      - ./hadoop_namenode:/opt/hadoop/data/namenode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./start-hdfs.sh:/start-hdfs.sh
     environment:
       - CLUSTER_NAME=big-data-programming-coursework
-      - HADOOP_OPTS="-Dhadoop.security.logger=INFO,RFAS"
+      - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
+      - HADOOP_HOME=/opt/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/hdfs namenode"]
+    command: [ "/bin/bash", "/start-hdfs.sh" ]
     healthcheck:
       test: ["CMD-SHELL", "hdfs dfsadmin -report | grep 'Live datanodes'"]
       interval: 5s
@@ -27,16 +30,21 @@ services:
     image: apache/hadoop:3.4.1
     container_name: datanode
     hostname: datanode
+    user: root
     depends_on:
       - namenode
     volumes:
-      - ./config:/opt/hadoop/etc/hadoop
-      - ./datanode_data:/opt/hadoop/data/datanode
+      - ./hadoop_datanode:/opt/hadoop/data/datanode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./init-datanode.sh:/init-datanode.sh
     environment:
       - CLUSTER_NAME=big-data-programming-coursework
+      - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
+      - HADOOP_HOME=/opt/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/hdfs datanode"]
+    command: [ "/bin/bash", "/init-datanode.sh" ]
     networks:
       - hadoop-network
 
@@ -50,10 +58,15 @@ services:
       - namenode
       - datanode
     volumes:
-      - ./config:/opt/hadoop/etc/hadoop
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+    environment:
+      - CLUSTER_NAME=big-data-programming-coursework
+      - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
+      - HADOOP_HOME=/opt/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/yarn resourcemanager"]
+    command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn resourcemanager"]
     networks:
       - hadoop-network
 
@@ -65,10 +78,15 @@ services:
       - namenode
       - resourcemanager
     volumes:
-      - ./config:/opt/hadoop/etc/hadoop
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+    environment:
+      - CLUSTER_NAME=big-data-programming-coursework
+      - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
+      - HADOOP_HOME=/opt/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/usr/local/hadoop/bin/yarn nodemanager"]
+    command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn nodemanager"]
     networks:
       - hadoop-network
 
