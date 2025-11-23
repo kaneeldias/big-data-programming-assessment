@@ -20,7 +20,7 @@ services:
       - ./hadoop.env
     command: [ "/bin/bash", "/start-hdfs.sh" ]
     healthcheck:
-      test: ["CMD-SHELL", "hdfs dfsadmin -report | grep 'Live datanodes'"]
+      test: [ "CMD-SHELL", "hdfs dfsadmin -report | grep 'Live datanodes'" ]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -69,7 +69,7 @@ services:
       - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn resourcemanager"]
+    command: [ "/bin/bash", "-c", "/opt/hadoop/bin/yarn resourcemanager" ]
     networks:
       - hadoop-network
 
@@ -90,9 +90,54 @@ services:
       - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
     env_file:
       - ./hadoop.env
-    command: ["/bin/bash", "-c", "/opt/hadoop/bin/yarn nodemanager"]
+    command: [ "/bin/bash", "-c", "/opt/hadoop/bin/yarn nodemanager" ]
     networks:
       - hadoop-network
+
+  hive-metastore-db:
+    image: postgres:15.15-alpine3.22
+    container_name: hive-metastore-db
+    environment:
+      POSTGRES_DB: metastore_db
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: Test@123
+    volumes:
+      - hive-db-data:/var/lib/postgresql/data
+    networks:
+      - hadoop-network
+
+  hive-metastore:
+    image: apache/hive:standalone-metastore-4.2.0
+    container_name: hive-metastore
+    depends_on:
+      - hive-metastore-db
+    environment:
+      SERVICE_NAME: metastore
+      DB_DRIVER: postgres
+      SERVICE_OPTS: "-Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://hive-metastore-db:5432/metastore_db -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=Test@123"
+      HIVE_SITE_CONF_fs_defaultFS: "hdfs://namenode:9000"
+    volumes:
+      - ./drivers/postgresql-42.7.3.jar:/opt/hive/lib/postgresql-42.7.3.jar
+    networks:
+      - hadoop-network
+
+  hive-server:
+    image: apache/hive:4.2.0
+    container_name: hive-server
+    depends_on:
+      - hive-metastore
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    environment:
+      SERVICE_NAME: hiveserver2
+      HIVE_SITE_CONF_hive_metastore_uris: "thrift://hive-metastore:9083"
+      HIVE_SITE_CONF_fs_defaultFS: "hdfs://namenode:9000"
+    networks:
+      - hadoop-network
+
+volumes:
+  hive-db-data:
 
 networks:
   hadoop-network:
