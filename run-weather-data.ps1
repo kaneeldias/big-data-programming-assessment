@@ -25,8 +25,8 @@ docker cp ./target/weatherdata.jar namenode:/tmp/weatherdata.jar
 docker exec -it namenode bash -c "hdfs dfs -mkdir -p /output/$timestamp"
 docker exec -it namenode bash -c "hadoop jar /tmp/weatherdata.jar /input/weatherData.csv /input/locationData.csv /output/$timestamp"
 
-docker exec -it namenode bash -c "hdfs dfs -ls /output/$timestamp"
-docker exec -it namenode bash -c "hdfs dfs -cat /output/$timestamp/final/part-r-00000"
-docker exec -it namenode bash -c "hdfs dfs -getmerge /output/$timestamp/final/* /tmp/final_data.csv"
+docker exec -it namenode bash -c "hdfs dfs -getmerge /output/$timestamp/final/* /tmp/weather_data.csv"
+docker exec -it namenode bash -c "hdfs dfs -getmerge /output/$timestamp/maximum_precipitation_by_month_output/* /tmp/maximum_data.csv"
 
-docker cp namenode:/tmp/final_data.csv ./output/weatherdata_$timestamp.csv
+docker cp namenode:/tmp/weather_data.csv ./output/weatherdata_$timestamp.csv
+docker cp namenode:/tmp/maximum_data.csv ./output/maximumdata_$timestamp.csv

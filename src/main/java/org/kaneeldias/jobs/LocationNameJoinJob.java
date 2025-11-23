@@ -95,7 +95,7 @@ public class LocationNameJoinJob extends WeatherDataJob {
 
     public static class LocationNameJoinReducer extends Reducer<IntWritable, Text, NullWritable, Text> {
         private static final Text HEADER =
-                new Text("location_name,month,precipitation,temperature");
+                new Text("location_name,month,total_precipitation (mm),mean_temperature (°C)");
         private boolean headerWritten = false;
 
         public void reduce(IntWritable key, Iterable<Text> values, Context context)

@@ -30,6 +30,19 @@ public class WeatherData {
             System.exit(1);
         }
 
+        WeatherDataJob calculateTotalPrecipitationByMonthJob = new CalculateTotalPrecipitationByMonthJob(jobTimestamp, weatherDataInputPath);
+        WeatherDataJob findMaximumPrecipitationJob = new FindMaximumPrecipitationByYearMonth(jobTimestamp, calculateTotalPrecipitationByMonthJob.getOutputPath());
+
+        boolean totalPrecipitationByMonthJobCompleted = calculateTotalPrecipitationByMonthJob.getJob().waitForCompletion(true);
+        if (!totalPrecipitationByMonthJobCompleted) {
+            System.exit(1);
+        }
+
+        boolean findMaximumPrecipitationJobCompleted = findMaximumPrecipitationJob.getJob().waitForCompletion(true);
+        if (!findMaximumPrecipitationJobCompleted) {
+            System.exit(1);
+        }
+
         System.exit(0);
     }
 
