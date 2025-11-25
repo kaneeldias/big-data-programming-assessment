@@ -27,15 +27,15 @@ services:
     networks:
       - hadoop-network
 
-  datanode:
+  datanode-1:
     image: apache/hadoop:3.4.1
-    container_name: datanode
+    container_name: datanode-1
     hostname: datanode
     user: root
     depends_on:
       - namenode
     volumes:
-      - ./hadoop_datanode:/opt/hadoop/data/datanode
+      - ./hadoop_datanode_1:/opt/hadoop/data/datanode
       - ./hadoop_config:/opt/hadoop/etc/hadoop
       - ./init-scripts/init-datanode.sh:/init-datanode.sh
     environment:
@@ -50,6 +50,30 @@ services:
     networks:
       - hadoop-network
 
+  datanode-2:
+    image: apache/hadoop:3.4.1
+    container_name: datanode-2
+    hostname: datanode
+    user: root
+    depends_on:
+      - namenode
+    volumes:
+      - ./hadoop_datanode_2:/opt/hadoop/data/datanode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./init-scripts/init-datanode.sh:/init-datanode.sh
+    environment:
+      - CLUSTER_NAME=big-data-programming-coursework
+      - HADOOP_OPTS=-Dhadoop.security.logger=INFO,RFAS
+      - HADOOP_HOME=/opt/hadoop
+      - JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.212.b04-0.el7_6.x86_64/jre
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+    env_file:
+      - ./hadoop.env
+    command: [ "/bin/bash", "/init-datanode.sh" ]
+    networks:
+      - hadoop-network
+
+
   resourcemanager:
     image: apache/hadoop:3.4.1
     container_name: resourcemanager
@@ -58,7 +82,8 @@ services:
       - "8088:8088"
     depends_on:
       - namenode
-      - datanode
+      - datanode-1
+      - datanode-2
     volumes:
       - ./hadoop_config:/opt/hadoop/etc/hadoop
     environment:
@@ -135,6 +160,42 @@ services:
       HIVE_SITE_CONF_fs_defaultFS: "hdfs://namenode:9000"
     networks:
       - hadoop-network
+
+  spark-master:
+    image: apache/spark:4.0.1
+    container_name: spark-master
+    hostname: spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - SPARK_WORKLOAD=master
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-network
+
+  spark-worker:
+    image: apache/spark:4.0.1
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SPARK_WORKER_CORES=4
+      - SPARK_WORKER_MEMORY=4g
+      - SPARK_NO_DAEMONIZE=true
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - hadoop-network
+    deploy:
+      replicas: 1
 
 volumes:
   hive-db-data:
